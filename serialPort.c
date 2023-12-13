@@ -1,8 +1,6 @@
 
 #include <stdio.h>
-#include <serialPort.h>
-
-
+#include "serialPort.h"
 
 void printError()
 {
@@ -82,10 +80,9 @@ serial_port_err_t serialPortOpen(serial_port_t* port, const char* name, uint64_t
     port->writeTimeout = writeTimeout;
 
     /* set the baud rate and the timeouts */
-    setBaud(&port, baud);
-    setTimeouts(&port, readTimeout, writeTimeout);
+    setBaud(port, baud);
+    setTimeouts(port, readTimeout, writeTimeout);
     
-
     /* open the serial port by opening it as a file with the following attributes */
     port->handle = CreateFileA(port->name, FILE_RW_MODE, FILE_NO_SHARED_ACCESS, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     
