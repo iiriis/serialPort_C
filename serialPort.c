@@ -1,6 +1,31 @@
 
+
+/*
+ * Copyright (C) 2023 Avijit Das <avijitdasxp@gmail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+
 #include <stdio.h>
 #include "serialPort.h"
+
+
+#define FILE_NO_SHARED_ACCESS   0
+#define FILE_RW_MODE            (FILE_GENERIC_READ | FILE_GENERIC_WRITE)
+#define MAX_ERR_CODE_LEN        64u
+
 
 void printError()
 {
@@ -71,20 +96,19 @@ serial_port_err_t serialPortOpen(serial_port_t* port, const char* name, uint64_t
     GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &currentConsoleMode);
     SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), currentConsoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING );
 
-
     /* initialise the port structure with the arguments */
     port->name = name;
     port->baud = baud;
     port->isOpen = FALSE;
     port->readTimeout = readTimeout;
     port->writeTimeout = writeTimeout;
+    
+    /* open the serial port by opening it as a file with the following attributes */
+    port->handle = CreateFileA(port->name, FILE_RW_MODE, FILE_NO_SHARED_ACCESS, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
     /* set the baud rate and the timeouts */
     setBaud(port, baud);
     setTimeouts(port, readTimeout, writeTimeout);
-    
-    /* open the serial port by opening it as a file with the following attributes */
-    port->handle = CreateFileA(port->name, FILE_RW_MODE, FILE_NO_SHARED_ACCESS, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     
     /* check whether the port handle is invalid */
     if(port->handle == INVALID_HANDLE_VALUE){
@@ -162,27 +186,4 @@ serial_port_err_t serialPortWrite(serial_port_t* port, uint8_t *buf, uint64_t si
     return SERIAL_ERR_OK;
 }
 
-
-int main()
-{
-
-    serial_port_t port;
-    uint8_t buf[5];
-    uint64_t size=1;
-
-    serialPortOpen(&port, "COM7", 115200, 1000, 1000);
-
-    char *subPwr = "$PAIR002*38\r\n";
- 
-    serialPortWrite(&port, subPwr, strlen(subPwr));
-
-    while(1){
-    serialPortRead(&port, buf, 1);
-    putchar(buf[0]);
-    }
-
-    serialPortClose(&port);
-
-    return 0;
-}
 
