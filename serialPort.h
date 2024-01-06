@@ -1,3 +1,7 @@
+/** \file serialPort.h
+ *  \author iiriis
+ * Header file contains the API declarations 
+ */
 /*
  * Copyright (C) 2023 Avijit Das <avijitdasxp@gmail.com>
  *
@@ -15,7 +19,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 #ifndef SERIALPORT_H
 #define SERIALPORT_H
 
@@ -25,125 +28,126 @@
 
 
 
-/* The Serial Port Structure to store the fields of the serial COMM */
+/**
+ * \brief The Serial Port Structure to store the fields of the serial COMM.
+ * 
+ */
 typedef struct {
-    HANDLE handle;          /* Handle to store the serial port as a file handle */
-    const char *name;       /* name of the serial COM port */
-    boolean isOpen;         /* Boolean value to indicate the port open status */
-    uint64_t baud;          /* Baud rate of the serial COM port */
-    uint32_t readTimeout;   /* read timeout in ms */
-    uint32_t writeTimeout;  /* write timeout in ms */
+    HANDLE handle;          /**< Handle to store the serial port as a file handle. */
+    const char *name;       /**< Name of the serial COM port. */
+    boolean isOpen;         /**< Boolean value to indicate the port open status. */
+    uint64_t baud;          /**< Baud rate of the serial COM port. */
+    uint32_t readTimeout;   /**< Read timeout in ms. */
+    uint32_t writeTimeout;  /**< Write timeout in ms. */
 }serial_port_t;
 
-/* error enum to store the error types */
+/**
+ * \brief Error enum to store the error types.
+ *
+ * This enum is used to store the error types that can be returned by the serial port functions.
+ * The enum values correspond to different types of errors that may occur during serial port operations.
+ * The meaning of each value is described below.
+ */
 typedef enum {
-    SERIAL_ERR_OK,
-    SERIAL_ERR_OPEN,
-    SERIAL_ERR_CLOSE,
-    SERIAL_ERR_UNKNOWN,
-    SERIAL_ERR_READ_UNKNOWN,
-    SERIAL_ERR_READ_SIZE_MISMATCH,
-    SERIAL_ERR_WRITE_UNKNOWN,
-    SERIAL_ERR_WRITE_SIZE_MISMATCH,
+    SERIAL_ERR_OK,                 /**< No error occurred. */
+    SERIAL_ERR_OPEN,               /**< Error occurred while opening the serial port. */
+    SERIAL_ERR_CLOSE,              /**< Error occurred while closing the serial port. */
+    SERIAL_ERR_UNKNOWN,            /**< Unknown error occurred. */
+    SERIAL_ERR_READ_UNKNOWN,       /**< Unknown error occurred during read operation. */
+    SERIAL_ERR_READ_SIZE_MISMATCH, /**< The number of bytes read doesn't match the expected size. */
+    SERIAL_ERR_WRITE_UNKNOWN,      /**< Unknown error occurred during write operation. */
+    SERIAL_ERR_WRITE_SIZE_MISMATCH /**< The number of bytes written doesn't match the buffer size. */
 }serial_port_err_t;
 
 
-
-
-/** 
- * Objective: To open the serial port and initialise the 
- * the serial port handle.
- * 
- * Parameters: 
- * serial_port_t* port: Pointer to the serial port structure.
- * const char* name: String containing the name of the serial port.
- * uint64_t baud: Baudrate of the serial port.
- * uint32_t readTimeout: timeout in ms before read action returns.
- * uint32_t writeTimeout: timeout in ms before write action returns.
- *  
- * Returns: serial_port_err_t
- * SERIAL_ERR_OK: on successful poening the serial port.
- * SERIAL_ERR_OPEN: could not open serial port.
-*/
+/**
+ * @brief Open the serial port and initialize the serial port handle.
+ *
+ * @param port Pointer to the serial port structure.
+ * @param name String containing the name of the serial port.
+ * @param baud Baudrate of the serial port.
+ * @param readTimeout Timeout in ms before read action returns.
+ * @param writeTimeout Timeout in ms before write action returns.
+ *
+ * @returns
+ *  `SERIAL_ERR_OK`: on successful opening the serial port. \n
+ *  `SERIAL_ERR_OPEN`: could not open serial port. \n
+ */
 serial_port_err_t serialPortOpen(serial_port_t* port, const char* name, uint64_t baud, uint32_t readTimeout, uint32_t writeTimeout);
 
 /** 
- * Objective: To close the serial port instance and print 
+ * @brief To close the serial port instance and print 
  * any error if occured.
  * 
- * Parameters: 
- * serial_port_t* port: The serial port structure to close.
+ * @param port The serial port structure to close.
  * 
- * Returns: serial_port_err_t
- * SERIAL_ERR_OK: on successfully closing the serial port.
- * SERIAL_ERR_CLOSE: error occured while closing the serial port.
+ * @returns 
+ * `SERIAL_ERR_OK`: on successfully closing the serial port. \n
+ * `SERIAL_ERR_CLOSE`: error occured while closing the serial port. \n
 */
 serial_port_err_t serialPortClose(serial_port_t* port);
 
 /** 
- * Objective: To read from the serial port
+ * @brief To read from the serial port
+ *  
+ * @param port: The serial port instance.
+ * @param buf: a buffer to store the read data.
+ * @param size: nos of expected bytes to read.
  * 
- * Parameters: 
- * serial_port_t* port: The serial port instance.
- * uint8_t *buf: a buffer to store the read data.
- * uint64_t size: nos of expected bytes to read.
- * 
- * Returns: serial_port_err_t
- * SERIAL_ERR_OK: on successfully reading the expected nos of bytes.
- * SERIAL_ERR_READ_UNKNOWN: on unkwon reason.
- * SERIAL_ERR_READ_SIZE_MISMATCH: nos of bytes read != expected size.
+ * @returns
+ * `SERIAL_ERR_OK`: on successfully reading the expected nos of bytes. \n
+ * `SERIAL_ERR_READ_UNKNOWN`: on unkwon reason. \n
+ * `SERIAL_ERR_READ_SIZE_MISMATCH`: nos of bytes read != expected size. \n
 */
 serial_port_err_t serialPortRead(serial_port_t* port, uint8_t *buf, uint64_t size);
 
 /** 
- * Objective: To write to the serial port
+ * @brief To write to the serial port
  * 
- * Parameters: 
- * serial_port_t* port: The serial port instance.
- * uint8_t *buf: a buffer containing the data to write.
- * uint64_t size: size of the buffer.
+ * @param port: The pointer to serial port instance.
+ * @param buf: a buffer containing the data to write.
+ * @param size: size of the buffer.
  * 
- * Returns: serial_port_err_t
- * SERIAL_ERR_OK: on successfully writing the full buffer.
- * SERIAL_ERR_WRITE_UNKNOWN: on unkwon reason.
- * SERIAL_ERR_WRITE_SIZE_MISMATCH: nos of bytes written != buffer size.
+ * @returns
+ * `SERIAL_ERR_OK`: on successfully writing the full buffer. \n
+ * `SERIAL_ERR_WRITE_UNKNOWN`: on unkwon reason. \n
+ * `SERIAL_ERR_WRITE_SIZE_MISMATCH`: nos of bytes written != buffer size. \n
 */
 serial_port_err_t serialPortWrite(serial_port_t* port, uint8_t *buf, uint64_t size);
 
 /** 
- * Objective: To set baud rate of the serial port
+ * @brief To set baud rate of the serial port
  * 
- * Parameters: 
- * serial_port_t* port: The serial port instance.
- * uint64_t baudRate: the Baud Rate
+ * @param port: The pointer to the serial port instance.
+ * @param baudRate: the Baud Rate
  * 
- * Returns: serial_port_err_t
- * SERIAL_ERR_OK: on successful setting the Baud Rate.
- * SERIAL_ERR_UNKNOWN: on unkwon reason.
+ * @returns
+ * `SERIAL_ERR_OK`: on successful setting the Baud Rate. \n
+ * `SERIAL_ERR_UNKNOWN`: on unkwon reason. \n
 */
 serial_port_err_t setBaud(serial_port_t* port, uint64_t baudRate);
 
 /** 
- * Objective: To set read and write timeouts of the serial port
+ * @brief To set read and write timeouts of the serial port
  * 
  * Parameters: 
- * serial_port_t* port: The serial port instance.
- * uint64_t readTimeout: Read timeout in ms
- * uint64_t writeTimeout: Read timeout in ms
+ * @param port: The pointer to the serial port instance.
+ * @param readTimeout: Read timeout in ms
+ * @param writeTimeout: Read timeout in ms
  * 
- * Returns: serial_port_err_t
- * SERIAL_ERR_OK: on successful changing the timeout.
- * SERIAL_ERR_UNKNOWN: on unkwon reason.
+ * @returns
+ * `SERIAL_ERR_OK`: on successful changing the timeout. \n
+ * `SERIAL_ERR_UNKNOWN`: on unkwon reason. \n
 */
 serial_port_err_t setTimeouts(serial_port_t* port, uint64_t readTimeout, uint64_t writeTimeout);
 
 /** 
- * Objective: To get the system error code and 
+ * @brief To get the system error code and 
  * print it's text format for human readability.
  * 
- * Parameters: NONE
+ * @param NONE
  * 
- * Returns: NULL
+ * @returns NULL
 */
 void printError();
 

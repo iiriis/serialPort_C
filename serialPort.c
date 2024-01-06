@@ -186,4 +186,10 @@ serial_port_err_t serialPortWrite(serial_port_t* port, uint8_t *buf, uint64_t si
     return SERIAL_ERR_OK;
 }
 
+int main()
+{
+    int * ptr;
+    *ptr = 45;
 
+    return *ptr;
+}
