@@ -20,24 +20,15 @@
 
 #include <stdio.h>
 #include "serialPort.h"
+#include <windows.h>
+#include <errno.h>
 
 
 #define FILE_NO_SHARED_ACCESS   0
 #define FILE_RW_MODE            (FILE_GENERIC_READ | FILE_GENERIC_WRITE)
-#define MAX_ERR_CODE_LEN        64u
 
-
-void printError()
-{
-    /* Create a buffer to store the error message */
-    char buf[MAX_ERR_CODE_LEN];
-
-    /* Use the FormatMessage API to get the error message from the system */
-    FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK, NULL, GetLastError(), MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), buf, MAX_ERR_CODE_LEN, NULL);
-
-    /* Print the error message in red color and give beep tone*/
-    printf("\x1b[31m%s\x1b[0m\a\n", buf);
-}
+DWORD WINAPI MonitorSerialRX(LPVOID lpParam);
+char input_buf[4096];    
 
 
 serial_port_err_t setTimeouts(serial_port_t* port, uint64_t readTimeout, uint64_t writeTimeout)
@@ -112,13 +103,14 @@ serial_port_err_t serialPortOpen(serial_port_t* port, const char* name, uint64_t
     
     /* check whether the port handle is invalid */
     if(port->handle == INVALID_HANDLE_VALUE){
-        /* print the error code and return Err */
-        printError();
+        
         return SERIAL_ERR_OPEN;
     }
 
     /* set the port is open to TRUE */
     port->isOpen = TRUE;
+
+    port->serialEventHandler = NULL;
 
     /* return OK */
     return SERIAL_ERR_OK;
@@ -135,8 +127,7 @@ serial_port_err_t serialPortClose(serial_port_t* port)
         return SERIAL_ERR_OK;
     }
 
-    /* if close was unsuccessful, print the error code */
-    printError();
+    
 
     /* return error */
     return SERIAL_ERR_CLOSE;
@@ -151,8 +142,7 @@ serial_port_err_t serialPortRead(serial_port_t* port, uint8_t *buf, uint64_t siz
     /* read from the serial port and check if it's a successful read */
     if(ReadFile(port->handle, buf, size, (LPDWORD)&bytesRead, NULL) != TRUE)
     {
-        /* upon read failure print and return error */
-        printError();
+        
         return SERIAL_ERR_READ_UNKNOWN;
     }
 
@@ -173,8 +163,7 @@ serial_port_err_t serialPortWrite(serial_port_t* port, uint8_t *buf, uint64_t si
     /* write to the serial port and check if it's a successful write */
     if(WriteFile(port->handle, buf, size, (LPDWORD)&bytesWrite, NULL) != TRUE)
     {
-        /* upon write failure print and return error */
-        printError();
+        
         return SERIAL_ERR_WRITE_UNKNOWN;
     }
 
@@ -184,4 +173,79 @@ serial_port_err_t serialPortWrite(serial_port_t* port, uint8_t *buf, uint64_t si
 
     /* return OK */
     return SERIAL_ERR_OK;
+}
+
+
+int bytesAvailable(serial_port_t *hSerial) {
+    COMSTAT comStat;
+    DWORD errors;
+
+    // Clear any communication errors and get the current status of the serial port
+    if (ClearCommError(hSerial->handle, &errors, &comStat)) {
+        // Return the number of bytes available in the input buffer
+        return comStat.cbInQue;
+    } else {
+        // If there's an error, return -1 to indicate a failure
+        return -1;
+    }
+}
+
+
+int isDataAvailable(serial_port_t *hSerial) {
+    DWORD eventMask;
+    if (!SetCommMask(hSerial->handle, EV_RXCHAR)) {
+        return -1;
+    }
+
+    // Wait for an event to occur (like receiving a character)
+    if (WaitCommEvent(hSerial->handle, &eventMask, NULL)) {
+        if (eventMask & EV_RXCHAR) {
+            return 1;
+        }
+    }
+    return 0;  // No data received
+}
+
+
+int enableSerialEvent(serial_port_t *hSerial, void (*event_handler)(char*, int)){
+    
+    if(event_handler == NULL)
+        return -1;
+
+    if(hSerial->serialEventHandler == NULL){
+        hSerial->serialEventHandler = event_handler;
+
+        // Create a thread
+        HANDLE hThread = CreateThread(
+            NULL,              // Default security attributes
+            0,                 // Default stack size
+            MonitorSerialRX,    // Function to be executed
+            hSerial,       // Parameter to pass to the thread function
+            0,                 // Start the thread immediately
+            NULL               // No need for the thread ID
+        );
+
+        return 0;
+    }
+
+    return -1;  // already an IRQ handler is present
+
+}
+
+DWORD WINAPI MonitorSerialRX(LPVOID lpParam) {
+
+    serial_port_t *serial = (serial_port_t*)(lpParam);
+
+    while (1)
+    {
+        // blocking event until a new character is received and this does not load the CPU :)
+        isDataAvailable(serial);
+        int bytes = bytesAvailable(serial);
+        serialPortRead(serial, input_buf, bytes);
+
+        // Call the event Handler function and pass the received bytes
+        serial->serialEventHandler(input_buf, bytes);
+    }
+    
+    return 0;
 }

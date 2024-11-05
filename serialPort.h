@@ -1,22 +1,14 @@
-/** \file serialPort.h
- *  \author iiriis
- * Header file contains the API declarations 
- */
-/*
- * Copyright (C) 2023 Avijit Das <avijitdasxp@gmail.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/**
+ * @file serialPort.h
+ * @brief API declarations for serial port operations.
+ * 
+ * This header file provides the declarations for handling serial port communication,
+ * including functions for opening, closing, reading, and writing to serial ports.
+ * 
+ * @author iiriis
+ * @date 2023 - 2024
+ * @copyright
+ * This program is licensed under the GNU General Public License v3.0.
  */
 
 #ifndef SERIALPORT_H
@@ -26,129 +18,167 @@
 #include <stdint.h>
 #include <windows.h>
 
-
+/**
+ * @defgroup structs Structures
+ * @brief Structures used for serial port communication.
+ */
 
 /**
- * \brief The Serial Port Structure to store the fields of the serial COMM.
+ * @defgroup enums Enums
+ * @brief Error codes for serial port functions.
+ */
+
+/**
+ * @defgroup HL_functions High-Level Functions
+ * @ingroup functions
+ * @brief Functions for managing serial port operations.
+ */
+
+/**
+ * @defgroup functions Functions
+ * @brief Functions for managing serial port operations.
+ */
+
+/**
+ * @struct serial_port_t
+ * @brief Stores configuration and status of a serial port.
  * 
+ * @ingroup structs
  */
 typedef struct {
-    HANDLE handle;          /**< Handle to store the serial port as a file handle. */
-    const char *name;       /**< Name of the serial COM port. */
-    boolean isOpen;         /**< Boolean value to indicate the port open status. */
-    uint64_t baud;          /**< Baud rate of the serial COM port. */
-    uint32_t readTimeout;   /**< Read timeout in ms. */
-    uint32_t writeTimeout;  /**< Write timeout in ms. */
-}serial_port_t;
+    HANDLE handle;          /**< File handle for the serial port. */
+    const char *name;       /**< Name of the serial port (e.g., COM1). */
+    uint8_t isOpen;            /**< Indicates if the port is open. */
+    uint64_t baud;          /**< Baud rate of the port. */
+    uint32_t readTimeout;   /**< Read timeout in milliseconds. */
+    uint32_t writeTimeout;  /**< Write timeout in milliseconds. */
+    void (*serialEventHandler)(char*, int); /**< Callback for received data events. */
+} serial_port_t;
 
 /**
- * \brief Error enum to store the error types.
- *
- * This enum is used to store the error types that can be returned by the serial port functions.
- * The enum values correspond to different types of errors that may occur during serial port operations.
- * The meaning of each value is described below.
+ * @enum serial_port_err_t
+ * @brief Error codes for serial port operations.
+ * 
+ * @ingroup enums
  */
 typedef enum {
-    SERIAL_ERR_OK,                 /**< No error occurred. */
-    SERIAL_ERR_OPEN,               /**< Error occurred while opening the serial port. */
-    SERIAL_ERR_CLOSE,              /**< Error occurred while closing the serial port. */
+    SERIAL_ERR_OK,                 /**< No error. */
+    SERIAL_ERR_OPEN,               /**< Error opening the serial port. */
+    SERIAL_ERR_CLOSE,              /**< Error closing the serial port. */
     SERIAL_ERR_UNKNOWN,            /**< Unknown error occurred. */
-    SERIAL_ERR_READ_UNKNOWN,       /**< Unknown error occurred during read operation. */
-    SERIAL_ERR_READ_SIZE_MISMATCH, /**< The number of bytes read doesn't match the expected size. */
-    SERIAL_ERR_WRITE_UNKNOWN,      /**< Unknown error occurred during write operation. */
-    SERIAL_ERR_WRITE_SIZE_MISMATCH /**< The number of bytes written doesn't match the buffer size. */
-}serial_port_err_t;
-
+    SERIAL_ERR_READ_UNKNOWN,       /**< Unknown error during read operation. */
+    SERIAL_ERR_READ_SIZE_MISMATCH, /**< Bytes read do not match expected size. */
+    SERIAL_ERR_WRITE_UNKNOWN,      /**< Unknown error during write operation. */
+    SERIAL_ERR_WRITE_SIZE_MISMATCH /**< Bytes written do not match buffer size. */
+} serial_port_err_t;
 
 /**
- * @brief Open the serial port and initialize the serial port handle.
+ * @brief Opens a serial port and initializes the handle.
  *
- * @param port Pointer to the serial port structure.
- * @param name String containing the name of the serial port.
- * @param baud Baudrate of the serial port.
- * @param readTimeout Timeout in ms before read action returns.
- * @param writeTimeout Timeout in ms before write action returns.
+ * @param[in] port Pointer to the serial port structure.
+ * @param[in] name String containing the name of the serial port.
+ * @param[in] baud Baud rate for the serial port.
+ * @param[in] readTimeout Read timeout in milliseconds.
+ * @param[in] writeTimeout Write timeout in milliseconds.
+ * 
+ * @return SERIAL_ERR_OK if successful, otherwise an appropriate error code.
  *
- * @returns
- *  `SERIAL_ERR_OK`: on successful opening the serial port. \n
- *  `SERIAL_ERR_OPEN`: could not open serial port. \n
+ * @ingroup HL_functions
  */
 serial_port_err_t serialPortOpen(serial_port_t* port, const char* name, uint64_t baud, uint32_t readTimeout, uint32_t writeTimeout);
 
-/** 
- * @brief To close the serial port instance and print 
- * any error if occured.
+/**
+ * @brief Closes the serial port.
  * 
- * @param port The serial port structure to close.
+ * @param[in] port Pointer to a serial_port_t structure.
  * 
- * @returns 
- * `SERIAL_ERR_OK`: on successfully closing the serial port. \n
- * `SERIAL_ERR_CLOSE`: error occured while closing the serial port. \n
-*/
+ * @return SERIAL_ERR_OK if successful, otherwise SERIAL_ERR_CLOSE.
+ *
+ * @ingroup HL_functions
+ */
 serial_port_err_t serialPortClose(serial_port_t* port);
 
-/** 
- * @brief To read from the serial port
- *  
- * @param port: The serial port instance.
- * @param buf: a buffer to store the read data.
- * @param size: nos of expected bytes to read.
+/**
+ * @brief Reads data from the serial port.
  * 
- * @returns
- * `SERIAL_ERR_OK`: on successfully reading the expected nos of bytes. \n
- * `SERIAL_ERR_READ_UNKNOWN`: on unkwon reason. \n
- * `SERIAL_ERR_READ_SIZE_MISMATCH`: nos of bytes read != expected size. \n
-*/
+ * @param[in] port Pointer to the serial port structure.
+ * @param[out] buf Buffer to store the read data.
+ * @param[in] size Number of bytes to read.
+ * 
+ * @return SERIAL_ERR_OK if successful, otherwise an appropriate error code.
+ *
+ * @ingroup HL_functions
+ */
 serial_port_err_t serialPortRead(serial_port_t* port, uint8_t *buf, uint64_t size);
 
-/** 
- * @brief To write to the serial port
+/**
+ * @brief Writes data to the serial port.
  * 
- * @param port: The pointer to serial port instance.
- * @param buf: a buffer containing the data to write.
- * @param size: size of the buffer.
+ * @param[in] port Pointer to the serial port structure.
+ * @param[in] buf Buffer containing the data to write.
+ * @param[in] size Size of the data in the buffer.
  * 
- * @returns
- * `SERIAL_ERR_OK`: on successfully writing the full buffer. \n
- * `SERIAL_ERR_WRITE_UNKNOWN`: on unkwon reason. \n
- * `SERIAL_ERR_WRITE_SIZE_MISMATCH`: nos of bytes written != buffer size. \n
-*/
+ * @return SERIAL_ERR_OK if successful, otherwise an appropriate error code.
+ *
+ * @ingroup HL_functions
+ */
 serial_port_err_t serialPortWrite(serial_port_t* port, uint8_t *buf, uint64_t size);
 
-/** 
- * @brief To set baud rate of the serial port
+/**
+ * @brief Sets the baud rate for the serial port.
  * 
- * @param port: The pointer to the serial port instance.
- * @param baudRate: the Baud Rate
+ * @param[in] port Pointer to the serial port structure.
+ * @param[in] baudRate Desired baud rate.
  * 
- * @returns
- * `SERIAL_ERR_OK`: on successful setting the Baud Rate. \n
- * `SERIAL_ERR_UNKNOWN`: on unkwon reason. \n
-*/
+ * @return SERIAL_ERR_OK if successful, otherwise SERIAL_ERR_UNKNOWN.
+ *
+ * @ingroup HL_functions
+ */
 serial_port_err_t setBaud(serial_port_t* port, uint64_t baudRate);
 
-/** 
- * @brief To set read and write timeouts of the serial port
+/**
+ * @brief Configures the read and write timeouts for the serial port.
  * 
- * Parameters: 
- * @param port: The pointer to the serial port instance.
- * @param readTimeout: Read timeout in ms
- * @param writeTimeout: Read timeout in ms
+ * @param[in] port Pointer to the serial port structure.
+ * @param[in] readTimeout Read timeout in milliseconds.
+ * @param[in] writeTimeout Write timeout in milliseconds.
  * 
- * @returns
- * `SERIAL_ERR_OK`: on successful changing the timeout. \n
- * `SERIAL_ERR_UNKNOWN`: on unkwon reason. \n
-*/
+ * @return SERIAL_ERR_OK if successful, otherwise SERIAL_ERR_UNKNOWN.
+ *
+ * @ingroup HL_functions
+ */
 serial_port_err_t setTimeouts(serial_port_t* port, uint64_t readTimeout, uint64_t writeTimeout);
 
-/** 
- * @brief To get the system error code and 
- * print it's text format for human readability.
+
+/**
+ * @brief Returns the number of bytes available to read from the serial port.
  * 
- * @param NONE
+ * @param[in] hSerial Pointer to a serial_port_t structure.
  * 
- * @returns NULL
-*/
-void printError();
+ * @return Number of bytes available, or -1 if an error occurred.
+ * 
+ * @ingroup HL_functions
+ */
+int bytesAvailable(serial_port_t *hSerial);
+
+/**
+ * @brief Registers a callback function to handle serial port data reception and starts a monitoring thread.
+ * 
+ * This function associates a callback handler to manage data received from the serial port.
+ * It spawns a dedicated thread that monitors the port for incoming data without causing CPU load due to polling.
+ * The thread invokes the callback whenever new data is available.
+ * 
+ * @param[in] hSerial Pointer to a serial_port_t structure.
+ * @param[in] event_handler     Callback function to handle received data, called with the buffer and number of bytes received.
+ *                          The callback function should have the following signature:
+ *                          **`void event_handler(char* buffer, int bytes);`**
+ *                          - `buffer` contains the data received from the serial port.
+ *                          - `bytes` is the number of bytes in the buffer.
+ * 
+ * @return 0 if successful, otherwise -1 if an event handler is already registered or on error.
+ * 
+ * @ingroup HL_functions
+ */
+int enableSerialEvent(serial_port_t *hSerial, void (*event_handler)(char* buffer, int bytes));
 
 #endif
