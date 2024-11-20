@@ -99,6 +99,59 @@ typedef enum {
 serial_port_err_t serialPortOpen(serial_port_t* port, const char* name, uint64_t baud, uint32_t readTimeout, uint32_t writeTimeout);
 
 /**
+ * @brief Sets the baud rate for the serial port.
+ * 
+ * @param[in] port Pointer to the serial port structure.
+ * @param[in] baudRate Desired baud rate.
+ * 
+ * @return SERIAL_ERR_OK if successful, otherwise SERIAL_ERR_UNKNOWN.
+ *
+ * @ingroup HL_functions
+ * 
+ * ### Example
+ * Below is an example that changes/sets the baud rate to 9600bps in the go.
+ * @code
+ * serial_port_t myPort;
+ * int main(){
+ *  if(serialPortOpen(&myPort, "COM3", 115200, 100, 100) != SERIAL_ERR_OK)
+ *      return -1;
+ *  if (setBaud(&myPort, 9600) != SERIAL_ERR_OK) {
+ *      return -1;
+ *  return 0;
+ * }
+ * @endcode
+ */
+serial_port_err_t setBaud(serial_port_t* port, uint64_t baudRate);
+
+/**
+ * @brief Configures the read and write timeouts for the serial port.
+ * 
+ * @param[in] port Pointer to the serial port structure.
+ * @param[in] readTimeout Read timeout in milliseconds.
+ * @param[in] writeTimeout Write timeout in milliseconds.
+ * 
+ * @return SERIAL_ERR_OK if successful, otherwise SERIAL_ERR_UNKNOWN.
+ *
+ * @ingroup HL_functions
+ * 
+ * ### Example
+ * Below is an example that changes/sets the read and write timeouts to 120ms and 200ms in the go.
+ * > **Note:** Ensure that the port is successfully opened before calling this function.
+ * @code
+ * serial_port_t myPort;
+ * int main(){
+ *  if(serialPortOpen(&myPort, "COM3", 115200, 100, 100) != SERIAL_ERR_OK)
+ *      return -1;
+ *  if (setTimeouts(&myPort, 120, 200) != SERIAL_ERR_OK) {
+ *      return -1;
+ *  return 0;
+ * }
+ * @endcode
+ */
+serial_port_err_t setTimeouts(serial_port_t* port, uint64_t readTimeout, uint64_t writeTimeout);
+
+
+/**
  * @brief Closes the serial port.
  * 
  * @param[in] port Pointer to a serial_port_t structure.
@@ -197,59 +250,6 @@ serial_port_err_t serialPortWrite(serial_port_t* port, uint8_t *buf, uint64_t si
 
 
 /**
- * @brief Sets the baud rate for the serial port.
- * 
- * @param[in] port Pointer to the serial port structure.
- * @param[in] baudRate Desired baud rate.
- * 
- * @return SERIAL_ERR_OK if successful, otherwise SERIAL_ERR_UNKNOWN.
- *
- * @ingroup HL_functions
- * 
- * ### Example
- * Below is an example that changes/sets the baud rate to 9600bps in the go.
- * @code
- * serial_port_t myPort;
- * int main(){
- *  if(serialPortOpen(&myPort, "COM3", 115200, 100, 100) != SERIAL_ERR_OK)
- *      return -1;
- *  if (setBaud(&myPort, 9600) != SERIAL_ERR_OK) {
- *      return -1;
- *  return 0;
- * }
- * @endcode
- */
-serial_port_err_t setBaud(serial_port_t* port, uint64_t baudRate);
-
-/**
- * @brief Configures the read and write timeouts for the serial port.
- * 
- * @param[in] port Pointer to the serial port structure.
- * @param[in] readTimeout Read timeout in milliseconds.
- * @param[in] writeTimeout Write timeout in milliseconds.
- * 
- * @return SERIAL_ERR_OK if successful, otherwise SERIAL_ERR_UNKNOWN.
- *
- * @ingroup HL_functions
- * 
- * ### Example
- * Below is an example that changes/sets the read and write timeouts to 120ms and 200ms in the go.
- * > **Note:** Ensure that the port is successfully opened before calling this function.
- * @code
- * serial_port_t myPort;
- * int main(){
- *  if(serialPortOpen(&myPort, "COM3", 115200, 100, 100) != SERIAL_ERR_OK)
- *      return -1;
- *  if (setTimeouts(&myPort, 120, 200) != SERIAL_ERR_OK) {
- *      return -1;
- *  return 0;
- * }
- * @endcode
- */
-serial_port_err_t setTimeouts(serial_port_t* port, uint64_t readTimeout, uint64_t writeTimeout);
-
-
-/**
  * @brief Returns the number of bytes available to read from the serial port.
  * 
  * @param[in] hSerial Pointer to a serial_port_t structure.
@@ -287,30 +287,38 @@ int bytesAvailable(serial_port_t *hSerial);
  * The thread invokes the callback whenever new data is available.
  * 
  * @param[in] hSerial Pointer to a serial_port_t structure.
- * @param[in] event_handler     Callback function to handle received data, called with the buffer and number of bytes received.
+ * @param[in] event_handler Callback function to handle received data, called with the buffer and number of bytes received.
  *                          The callback function should have the following signature:
  *                          **`void event_handler(char* buffer, int bytes);`**
  *                          - `buffer` contains the data received from the serial port.
  *                          - `bytes` is the number of bytes in the buffer.
  * 
- * @return 0 if successful, otherwise -1 if an event handler is already registered or on error.
+ * @return SERIAL_ERR_OK if successful, otherwise SERIAL_ERR_UNKNOWN if an event handler is already registered or on error.
  * 
  * @ingroup HL_functions
  *
  * ### Example
- * Below is an example demonstrating how to 
- * The advantage of event based is the CPU doesnot have to poll howmany bytes to be read, and instead CPU is kept in idle state.
+ * Below is an example demonstrating how to register an event-based callback to handle data reception.
+ * This approach minimizes CPU usage by avoiding polling for available data, keeping the CPU idle until data is received.
  * @code
+ * 
  * void onSerialDataReceived(char* data, int length) {
  *     printf("Data received: %.*s\n", length, data);
  * }
+ * 
  * serial_port_t myPort;
- * uint8_t buffer[256];
+ * 
  * int main() {
  *     if (serialPortOpen(&myPort, "COM3", 115200, 100, 100) != SERIAL_ERR_OK)
  *         return -1;
- *     
-
+ *     if (enableSerialEvent(&myPort, onSerialDataReceived) != SERIAL_ERR_OK)
+ *         return -1;
+ *     while (1) {
+ *         Sleep(1000);
+ *     }
+ *     return 0;
+ * }
+ * @endcode
  */
 serial_port_err_t enableSerialEvent(serial_port_t *hSerial, void (*event_handler)(char* buffer, int bytes));
 

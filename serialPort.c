@@ -225,10 +225,10 @@ serial_port_err_t enableSerialEvent(serial_port_t *hSerial, void (*event_handler
             NULL                // No need for the thread ID
         );
 
-        return 0;
+        return SERIAL_ERR_OK;
     }
 
-    return -1;  // already an IRQ handler is present
+    return SERIAL_ERR_UNKNOWN;  // already an IRQ handler is present
 
 }
 
