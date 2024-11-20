@@ -207,22 +207,22 @@ int isDataAvailable(serial_port_t *hSerial) {
 }
 
 
-int enableSerialEvent(serial_port_t *hSerial, void (*event_handler)(char*, int)){
+serial_port_err_t enableSerialEvent(serial_port_t *hSerial, void (*event_handler)(char*, int)){
     
     if(event_handler == NULL)
-        return -1;
+        return SERIAL_ERR_UNKNOWN;
 
     if(hSerial->serialEventHandler == NULL){
         hSerial->serialEventHandler = event_handler;
 
         // Create a thread
         HANDLE hThread = CreateThread(
-            NULL,              // Default security attributes
-            0,                 // Default stack size
+            NULL,               // Default security attributes
+            0,                  // Default stack size
             MonitorSerialRX,    // Function to be executed
-            hSerial,       // Parameter to pass to the thread function
-            0,                 // Start the thread immediately
-            NULL               // No need for the thread ID
+            hSerial,            // Parameter to pass to the thread function
+            0,                  // Start the thread immediately
+            NULL                // No need for the thread ID
         );
 
         return 0;
