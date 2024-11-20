@@ -95,6 +95,8 @@ typedef enum {
  *  return 0;
  * }
  * @endcode
+ * 
+ * @callgraph
  */
 serial_port_err_t serialPortOpen(serial_port_t* port, const char* name, uint64_t baud, uint32_t readTimeout, uint32_t writeTimeout);
 
@@ -120,6 +122,9 @@ serial_port_err_t serialPortOpen(serial_port_t* port, const char* name, uint64_t
  *  return 0;
  * }
  * @endcode
+ * 
+ * @callergraph
+ * @callgraph
  */
 serial_port_err_t setBaud(serial_port_t* port, uint64_t baudRate);
 
@@ -147,6 +152,9 @@ serial_port_err_t setBaud(serial_port_t* port, uint64_t baudRate);
  *  return 0;
  * }
  * @endcode
+ *
+ * @callergraph
+ * @callgraph
  */
 serial_port_err_t setTimeouts(serial_port_t* port, uint64_t readTimeout, uint64_t writeTimeout);
 
@@ -172,6 +180,9 @@ serial_port_err_t setTimeouts(serial_port_t* port, uint64_t readTimeout, uint64_
  *  return 0;
  * }
  * @endcode
+ * 
+ * @callergraph
+ * @callgraph
  */
 serial_port_err_t serialPortClose(serial_port_t* port);
 
@@ -206,6 +217,9 @@ serial_port_err_t serialPortClose(serial_port_t* port);
  *      }
  * }
  * @endcode
+ * 
+ * @callergraph
+ * @callgraph
  */
 serial_port_err_t serialPortRead(serial_port_t* port, uint8_t *buf, uint64_t size);
 
@@ -245,6 +259,9 @@ serial_port_err_t serialPortRead(serial_port_t* port, uint8_t *buf, uint64_t siz
  *     return 0;
  * }
  * @endcode
+ * 
+ * @callergraph
+ * @callgraph
  */
 serial_port_err_t serialPortWrite(serial_port_t* port, uint8_t *buf, uint64_t size);
 
@@ -275,6 +292,9 @@ serial_port_err_t serialPortWrite(serial_port_t* port, uint8_t *buf, uint64_t si
  *     return 0;
  * }
  * @endcode
+ * 
+ * @callergraph
+ * @callgraph
  */
 int bytesAvailable(serial_port_t *hSerial);
 
@@ -319,6 +339,9 @@ int bytesAvailable(serial_port_t *hSerial);
  *     return 0;
  * }
  * @endcode
+ * 
+ * @callergraph
+ * @callgraph
  */
 serial_port_err_t enableSerialEvent(serial_port_t *hSerial, void (*event_handler)(char* buffer, int bytes));
 
