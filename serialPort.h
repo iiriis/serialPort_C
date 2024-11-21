@@ -96,7 +96,7 @@ typedef enum {
  * }
  * @endcode
  * 
- * @callgraph
+ * 
  */
 serial_port_err_t serialPortOpen(serial_port_t* port, const char* name, uint64_t baud, uint32_t readTimeout, uint32_t writeTimeout);
 
@@ -123,8 +123,7 @@ serial_port_err_t serialPortOpen(serial_port_t* port, const char* name, uint64_t
  * }
  * @endcode
  * 
- * @callergraph
- * @callgraph
+ * 
  */
 serial_port_err_t setBaud(serial_port_t* port, uint64_t baudRate);
 
@@ -142,6 +141,7 @@ serial_port_err_t setBaud(serial_port_t* port, uint64_t baudRate);
  * ### Example
  * Below is an example that changes/sets the read and write timeouts to 120ms and 200ms in the go.
  * > **Note:** Ensure that the port is successfully opened before calling this function.
+ * 
  * @code
  * serial_port_t myPort;
  * int main(){
@@ -153,8 +153,7 @@ serial_port_err_t setBaud(serial_port_t* port, uint64_t baudRate);
  * }
  * @endcode
  *
- * @callergraph
- * @callgraph
+ * 
  */
 serial_port_err_t setTimeouts(serial_port_t* port, uint64_t readTimeout, uint64_t writeTimeout);
 
@@ -181,8 +180,7 @@ serial_port_err_t setTimeouts(serial_port_t* port, uint64_t readTimeout, uint64_
  * }
  * @endcode
  * 
- * @callergraph
- * @callgraph
+ * 
  */
 serial_port_err_t serialPortClose(serial_port_t* port);
 
@@ -218,8 +216,7 @@ serial_port_err_t serialPortClose(serial_port_t* port);
  * }
  * @endcode
  * 
- * @callergraph
- * @callgraph
+ * 
  */
 serial_port_err_t serialPortRead(serial_port_t* port, uint8_t *buf, uint64_t size);
 
@@ -260,8 +257,7 @@ serial_port_err_t serialPortRead(serial_port_t* port, uint8_t *buf, uint64_t siz
  * }
  * @endcode
  * 
- * @callergraph
- * @callgraph
+ * 
  */
 serial_port_err_t serialPortWrite(serial_port_t* port, uint8_t *buf, uint64_t size);
 
@@ -293,8 +289,7 @@ serial_port_err_t serialPortWrite(serial_port_t* port, uint8_t *buf, uint64_t si
  * }
  * @endcode
  * 
- * @callergraph
- * @callgraph
+ * 
  */
 int bytesAvailable(serial_port_t *hSerial);
 
@@ -340,8 +335,7 @@ int bytesAvailable(serial_port_t *hSerial);
  * }
  * @endcode
  * 
- * @callergraph
- * @callgraph
+ * 
  */
 serial_port_err_t enableSerialEvent(serial_port_t *hSerial, void (*event_handler)(char* buffer, int bytes));
 
